@@ -11,7 +11,8 @@ import java.util.logging.Logger;
 
 /**
  * Conexión centralizada a la base de datos relacional mediante JDBC.
- * Lee la configuración desde db.properties y centraliza el manejo de excepciones de integridad.
+ * Compatible tanto con Supabase (PostgreSQL) en la nube como con MySQL / XAMPP local.
+ * Lee los parámetros dinámicamente desde db.properties.
  */
 public class DatabaseConnection {
 
@@ -23,37 +24,55 @@ public class DatabaseConnection {
             if (input != null) {
                 props.load(input);
             } else {
-                LOGGER.warning("Archivo db.properties no encontrado en classpath. Usando valores por defecto.");
-                props.setProperty("db.driver", "com.mysql.cj.jdbc.Driver");
-                props.setProperty("db.url", "jdbc:mysql://localhost:3306/inmobiliaria_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=America/Bogota&characterEncoding=UTF-8");
-                props.setProperty("db.user", "root");
-                props.setProperty("db.password", "");
+                LOGGER.warning("Archivo db.properties no encontrado en classpath. Usando Supabase por defecto.");
+                props.setProperty("db.driver", "org.postgresql.Driver");
+                props.setProperty("db.url", "jdbc:postgresql://aws-0-us-west-2.pooler.supabase.com:5432/postgres?sslmode=require");
+                props.setProperty("db.user", "postgres.izvgvqqecuztatpflnwy");
+                props.setProperty("db.password", "ZwwILjIV6ISHIqr6");
             }
-            Class.forName(props.getProperty("db.driver", "com.mysql.cj.jdbc.Driver"));
+
+            String driver = props.getProperty("db.driver");
+            if (driver != null && !driver.trim().isEmpty()) {
+                Class.forName(driver.trim());
+            } else {
+                Class.forName("org.postgresql.Driver");
+            }
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error al inicializar el driver JDBC o cargar db.properties", e);
         }
     }
 
     /**
-     * Obtiene una nueva conexión activa con la base de datos.
+     * Obtiene una nueva conexión activa con la base de datos configurada.
      */
     public static Connection getConnection() throws SQLException {
         String url = props.getProperty("db.url");
-        String user = props.getProperty("db.user", "root");
-        String password = props.getProperty("db.password", "");
+        String user = props.getProperty("db.user");
+        String password = props.getProperty("db.password");
         return DriverManager.getConnection(url, user, password);
     }
 
     /**
-     * Convierte excepciones técnicas de integridad de SQL en mensajes amigables y comprensibles para el usuario.
+     * Convierte excepciones técnicas de integridad de SQL (tanto MySQL como PostgreSQL / Supabase)
+     * en mensajes comprensibles y amigables para el usuario.
      */
     public static String translateSQLException(SQLException ex) {
-        if (ex instanceof SQLIntegrityConstraintViolationException || ex.getErrorCode() == 1062) {
-            String msg = ex.getMessage();
+        String sqlState = ex.getSQLState();
+        int errorCode = ex.getErrorCode();
+        String msg = ex.getMessage();
+
+        // Error 1062 en MySQL o 23505 (unique_violation) en PostgreSQL
+        boolean esDuplicado = (ex instanceof SQLIntegrityConstraintViolationException) ||
+                              errorCode == 1062 ||
+                              "23505".equals(sqlState);
+
+        // Error 1451/1452 en MySQL o 23503 (foreign_key_violation) en PostgreSQL
+        boolean esForanea = errorCode == 1451 || errorCode == 1452 || "23503".equals(sqlState);
+
+        if (esDuplicado) {
             if (msg != null) {
                 String lower = msg.toLowerCase();
-                if (lower.contains("correo") || lower.contains("usuario.correo")) {
+                if (lower.contains("correo") || lower.contains("usuario_correo_key")) {
                     return "El correo electrónico ya se encuentra registrado en el sistema.";
                 } else if (lower.contains("matricula") || lower.contains("matricula_inmobiliaria")) {
                     return "La matrícula inmobiliaria ya pertenece a otra propiedad registrada.";
@@ -67,10 +86,11 @@ public class DatabaseConnection {
                     return "El usuario ya tiene asignado dicho rol en el sistema.";
                 }
             }
-            return "No se pudo guardar la información porque ya existe un registro con datos idénticos.";
-        } else if (ex.getErrorCode() == 1451 || ex.getErrorCode() == 1452) {
+            return "No se pudo guardar la información porque ya existe un registro con datos idénticos (restricción UNIQUE).";
+        } else if (esForanea) {
             return "No es posible realizar esta acción porque el registro está relacionado con otras entidades activas (citas, solicitudes o favoritos).";
         }
-        return "Ocurrió un error al procesar la solicitud en la base de datos. Por favor intente más tarde.";
+
+        return "Ocurrió un error al procesar la solicitud en la base de datos: " + (msg != null ? msg : "Error general");
     }
 }

@@ -39,20 +39,26 @@ Aplicación web integral para la administración y comercialización inmobiliari
 
 ---
 
-## Instrucciones de Instalación y Ejecución
+## Base de Datos en Línea (Supabase) y Local (MySQL)
 
-### 1. Carga de la Base de Datos en MySQL (XAMPP)
+El sistema soporta indistintamente **Supabase (PostgreSQL en la Nube)** y **MySQL Local (XAMPP)** mediante el archivo desacoplado `src/main/resources/db.properties`.
+
+### 1. Conexión Activa en la Nube (Supabase - Proyecto izvgvqqecuztatpflnwy)
+El proyecto está configurado y sincronizado directamente con Supabase PostgreSQL:
+- **Host del Pooler:** `aws-0-us-west-2.pooler.supabase.com:5432`
+- **Usuario:** `postgres.izvgvqqecuztatpflnwy`
+- **Base de Datos:** `postgres` (SSL habilitado)
+- **Estado Actual:** 16 tablas creadas y pobladas con registros de prueba en Supabase.
+- Para reiniciar o re-sembrar la base de datos de Supabase en cualquier momento, basta con ejecutar:
+  ```bash
+  mvn compile exec:java -Dexec.mainClass="com.inmobiliaria.util.SetupSupabaseDB"
+  ```
+
+### 2. Alternar a MySQL Local (XAMPP)
+Si se desea trabajar de forma local offline:
 1. Inicie el servicio de **MySQL** en el panel de control de XAMPP.
-2. Abra **phpMyAdmin** o su cliente SQL favorito y ejecute en orden los siguientes scripts ubicados en `src/main/resources/sql/`:
-   - `01_ddl_inmobiliaria.sql`: Creación de la base de datos `inmobiliaria_db` y las 16 tablas con claves y restricciones.
-   - `02_dml_inmobiliaria.sql`: Inserción de al menos 10 registros coherentes por tabla y contraseñas cifradas en BCrypt.
-   - `03_consultas_academicas.sql`: Consultas pedagógicas obligatorias para la sustentación.
-
-### 2. Configuración de Conexión
-Si su servidor MySQL tiene una contraseña distinta a la predeterminada de XAMPP (`root` sin contraseña), edite el archivo:
-```properties
-src/main/resources/db.properties
-```
+2. Ejecute `src/main/resources/sql/01_ddl_inmobiliaria.sql` y `02_dml_inmobiliaria.sql` en phpMyAdmin.
+3. En `src/main/resources/db.properties`, comente las líneas de Supabase y descomente las líneas de MySQL.
 
 ### 3. Compilación y Despliegue en Tomcat
 1. Compile el proyecto y genere el archivo `war`:
