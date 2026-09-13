@@ -1,0 +1,37 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+
+<div class="container mt-3">
+    <!-- Mensaje de Error (Desde request o parámetro URL) -->
+    <c:if test="${not empty error or not empty param.error}">
+        <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2 shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle-fill flex-shrink-0 fs-5"></i>
+            <div>
+                <strong>Atención:</strong> ${not empty error ? error : param.error}
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+    </c:if>
+
+    <!-- Mensaje de Éxito -->
+    <c:if test="${not empty exito or not empty param.exito}">
+        <div class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2 shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill flex-shrink-0 fs-5"></i>
+            <div>
+                ${not empty exito ? exito : param.exito}
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+    </c:if>
+
+    <!-- Mensaje Informativo -->
+    <c:if test="${not empty mensaje or not empty param.mensaje}">
+        <div class="alert alert-info alert-dismissible fade show d-flex align-items-center gap-2 shadow-sm" role="alert">
+            <i class="bi bi-info-circle-fill flex-shrink-0 fs-5"></i>
+            <div>
+                ${not empty mensaje ? mensaje : param.mensaje}
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+    </c:if>
+</div>
