@@ -61,6 +61,14 @@
             <artifactId>jbcrypt</artifactId>
             <version>0.4</version>
         </dependency>
+
+        <!-- Apache Tomcat JDBC Connection Pool (Provided by Tomcat) -->
+        <dependency>
+            <groupId>org.apache.tomcat</groupId>
+            <artifactId>tomcat-jdbc</artifactId>
+            <version>8.5.96</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <build>

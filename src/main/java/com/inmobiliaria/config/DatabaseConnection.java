@@ -1,5 +1,8 @@
 package com.inmobiliaria.config;
 
+import org.apache.tomcat.jdbc.pool.DataSource;
+import org.apache.tomcat.jdbc.pool.PoolProperties;
+
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -10,16 +13,23 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Conexión centralizada a la base de datos relacional mediante JDBC.
- * Compatible tanto con Supabase (PostgreSQL) en la nube como con MySQL / XAMPP local.
- * Lee los parámetros dinámicamente desde db.properties.
+ * Conexión centralizada a la base de datos relacional mediante JDBC y Connection Pooling de alto rendimiento.
+ * Compatible tanto con Supabase (PostgreSQL en la nube) como con MySQL / XAMPP local.
+ * Implementa Apache Tomcat JDBC Pool para mantener conexiones abiertas, eliminando la latencia de
+ * handshake TCP/TLS en cada consulta y acelerando la navegación entre pestañas de segundos a milisegundos.
  */
 public class DatabaseConnection {
 
     private static final Logger LOGGER = Logger.getLogger(DatabaseConnection.class.getName());
     private static Properties props = new Properties();
+    private static DataSource dataSource;
+    private static volatile boolean poolInitialized = false;
 
     static {
+        inicializarPool();
+    }
+
+    private static synchronized void inicializarPool() {
         try (InputStream input = DatabaseConnection.class.getClassLoader().getResourceAsStream("db.properties")) {
             if (input != null) {
                 props.load(input);
@@ -31,25 +41,85 @@ public class DatabaseConnection {
                 props.setProperty("db.password", "ZwwILjIV6ISHIqr6");
             }
 
-            String driver = props.getProperty("db.driver");
-            if (driver != null && !driver.trim().isEmpty()) {
-                Class.forName(driver.trim());
-            } else {
-                Class.forName("org.postgresql.Driver");
-            }
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error al inicializar el driver JDBC o cargar db.properties", e);
+            String driver = props.getProperty("db.driver", "org.postgresql.Driver").trim();
+            String url = props.getProperty("db.url").trim();
+            String user = props.getProperty("db.user").trim();
+            String password = props.getProperty("db.password").trim();
+
+            Class.forName(driver);
+
+            // Configuración optimizada del Connection Pool de Tomcat
+            PoolProperties p = new PoolProperties();
+            p.setUrl(url);
+            p.setDriverClassName(driver);
+            p.setUsername(user);
+            p.setPassword(password);
+
+            // Parámetros de capacidad y rapidez
+            int maxConns = Integer.parseInt(props.getProperty("db.pool.maxConnections", "15").trim());
+            p.setInitialSize(4);                 // 4 conexiones calientes listas de inmediato
+            p.setMaxActive(maxConns);            // Hasta el límite configurado
+            p.setMaxIdle(10);                    // Mantener hasta 10 conexiones en reposo listas
+            p.setMinIdle(4);                     // Mínimo 4 conexiones siempre abiertas
+            p.setMaxWait(10000);                 // 10s máximo si el pool estuviera ocupado
+
+            // Validación de conexiones inteligente (no sobrecargar la red si se usó hace menos de 30s)
+            p.setTestOnBorrow(true);
+            p.setValidationQuery("SELECT 1");
+            p.setValidationInterval(30000);
+
+            // Mantenimiento y prevención de fugas de conexión
+            p.setTestWhileIdle(true);
+            p.setTimeBetweenEvictionRunsMillis(30000);
+            p.setMinEvictableIdleTimeMillis(60000);
+            p.setRemoveAbandoned(true);
+            p.setRemoveAbandonedTimeout(60);
+
+            dataSource = new DataSource();
+            dataSource.setPoolProperties(p);
+            poolInitialized = true;
+            LOGGER.info("Tomcat JDBC Connection Pool inicializado exitosamente hacia: " + url);
+
+        } catch (Throwable e) {
+            LOGGER.log(Level.SEVERE, "No se pudo inicializar Tomcat JDBC Pool. Se usará fallback a DriverManager: " + e.getMessage(), e);
+            poolInitialized = false;
         }
     }
 
     /**
-     * Obtiene una nueva conexión activa con la base de datos configurada.
+     * Obtiene una conexión activa reutilizada del Pool (o DriverManager como fallback seguro).
      */
     public static Connection getConnection() throws SQLException {
+        if (poolInitialized && dataSource != null) {
+            try {
+                return dataSource.getConnection();
+            } catch (SQLException ex) {
+                LOGGER.log(Level.WARNING, "Error al obtener conexión del pool, reintentando con DriverManager...", ex);
+            }
+        }
+
+        // Fallback para entornos independientes
         String url = props.getProperty("db.url");
         String user = props.getProperty("db.user");
         String password = props.getProperty("db.password");
         return DriverManager.getConnection(url, user, password);
+    }
+
+    /**
+     * Cierra el pool de conexiones de manera ordenada al detener la aplicación.
+     */
+    public static synchronized void closePool() {
+        if (dataSource != null) {
+            try {
+                dataSource.close();
+                LOGGER.info("Tomcat JDBC Connection Pool cerrado limpiamente.");
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, "Error al cerrar el pool de conexiones", e);
+            } finally {
+                dataSource = null;
+                poolInitialized = false;
+            }
+        }
     }
 
     /**

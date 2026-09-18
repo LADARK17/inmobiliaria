@@ -11,3 +11,11 @@ nbproject/private/
 build/
 dist/
 *.log
+
+# Credenciales sensibles - NO subir al repositorio
+src/main/resources/db.properties
+
+# Carpeta WEB-INF desplegada (runtime de Tomcat, no fuente)
+WEB-INF/
+assets/
+index.jsp

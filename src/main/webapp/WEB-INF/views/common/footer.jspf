@@ -1,48 +1,71 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <footer class="footer-custom mt-auto">
     <div class="container">
-        <div class="row g-4">
-            <div class="col-lg-4 col-md-6">
-                <h5 class="text-white fw-bold d-flex align-items-center gap-2">
-                    <i class="bi bi-buildings-fill text-primary"></i> InmoGest.co
-                </h5>
-                <p class="small text-secondary">
-                    Plataforma web académica para administración inmobiliaria integral desarrollada en Java EE (MVC), JSP, JDBC y MySQL bajo metodología Scrum.
+        <div class="row g-4 justify-content-between">
+            <!-- Columna 1: Marca y presentación -->
+            <div class="col-lg-5 col-md-12">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <div class="brand-icon-box" style="width: 36px; height: 36px; font-size: 1.15rem;">
+                        <i class="bi bi-buildings-fill"></i>
+                    </div>
+                    <div class="d-flex flex-column lh-1">
+                        <span class="fs-4 fw-bold text-white brand-font">Hábitat<span class="text-primary">Prime</span></span>
+                        <span class="text-secondary text-uppercase" style="font-size: 0.6rem; letter-spacing: 1.5px; font-weight: 600;">Bienes Raíces</span>
+                    </div>
+                </div>
+                <p class="small text-secondary mb-4" style="line-height: 1.7; max-width: 420px;">
+                    Plataforma web para administración inmobiliaria integral desarrollada bajo arquitectura <strong>MVC</strong> en Java EE, JSP, JDBC y PostgreSQL/MySQL con diseño en 3FN.
                 </p>
-                <div class="d-flex gap-3 text-white fs-5">
-                    <a href="#" class="text-secondary hover-primary"><i class="bi bi-facebook"></i></a>
-                    <a href="#" class="text-secondary hover-primary"><i class="bi bi-instagram"></i></a>
-                    <a href="#" class="text-secondary hover-primary"><i class="bi bi-linkedin"></i></a>
+                <div class="d-flex gap-2">
+                    <span class="badge bg-dark border border-secondary text-secondary px-3 py-2 rounded-pill small">
+                        <i class="bi bi-code-slash text-primary me-1"></i> Java EE MVC
+                    </span>
+                    <span class="badge bg-dark border border-secondary text-secondary px-3 py-2 rounded-pill small">
+                        <i class="bi bi-database-fill text-success me-1"></i> 3FN Relacional
+                    </span>
                 </div>
             </div>
-            <div class="col-lg-2 col-md-6">
-                <h6 class="text-white fw-semibold mb-3">Navegación</h6>
-                <ul class="list-unstyled small">
-                    <li class="mb-2"><a href="${pageContext.request.contextPath}/inicio" class="text-secondary text-decoration-none">Inicio</a></li>
-                    <li class="mb-2"><a href="${pageContext.request.contextPath}/catalogo" class="text-secondary text-decoration-none">Catálogo</a></li>
-                    <li class="mb-2"><a href="${pageContext.request.contextPath}/login" class="text-secondary text-decoration-none">Ingreso Clientes</a></li>
-                    <li class="mb-2"><a href="${pageContext.request.contextPath}/registro" class="text-secondary text-decoration-none">Crear Cuenta</a></li>
+
+            <!-- Columna 2: Enlaces Rápidos de Navegación -->
+            <div class="col-lg-3 col-md-6">
+                <h6>Navegación</h6>
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2"><a href="${pageContext.request.contextPath}/inicio" class="footer-link"><i class="bi bi-chevron-right text-primary small me-1"></i>Inicio</a></li>
+                    <li class="mb-2"><a href="${pageContext.request.contextPath}/catalogo" class="footer-link"><i class="bi bi-chevron-right text-primary small me-1"></i>Catálogo de Inmuebles</a></li>
+                    <li class="mb-2"><a href="${pageContext.request.contextPath}/login" class="footer-link"><i class="bi bi-chevron-right text-primary small me-1"></i>Iniciar Sesión</a></li>
+                    <li><a href="${pageContext.request.contextPath}/registro" class="footer-link"><i class="bi bi-chevron-right text-primary small me-1"></i>Crear Cuenta</a></li>
                 </ul>
             </div>
-            <div class="col-lg-3 col-md-6">
-                <h6 class="text-white fw-semibold mb-3">Credenciales de Demostración</h6>
-                <ul class="list-unstyled small text-secondary">
-                    <li class="mb-1"><strong>Admin:</strong> admin@inmobiliaria.com / 123456</li>
-                    <li class="mb-1"><strong>Agente:</strong> agente.carlos@santander.com / 123456</li>
-                    <li class="mb-1"><strong>Cliente:</strong> cliente.juan@gmail.com / 123456</li>
-                </ul>
-            </div>
-            <div class="col-lg-3 col-md-6">
-                <h6 class="text-white fw-semibold mb-3">Soporte y Contacto</h6>
-                <p class="small text-secondary mb-1"><i class="bi bi-geo-alt-fill text-primary me-2"></i>Bucaramanga, Santander, Colombia</p>
-                <p class="small text-secondary mb-1"><i class="bi bi-telephone-fill text-primary me-2"></i>PBX: (607) 635-1000</p>
-                <p class="small text-secondary mb-1"><i class="bi bi-envelope-fill text-primary me-2"></i>soporte@inmogest.co</p>
+
+            <!-- Columna 3: Ubicación y Contacto -->
+            <div class="col-lg-4 col-md-6">
+                <h6>Soporte y Ubicación</h6>
+                <p class="small text-secondary mb-2 d-flex align-items-start gap-2">
+                    <i class="bi bi-geo-alt-fill text-danger mt-1"></i>
+                    <span>Bucaramanga, Santander, Colombia</span>
+                </p>
+                <p class="small text-secondary mb-2 d-flex align-items-center gap-2">
+                    <i class="bi bi-telephone-fill text-success"></i>
+                    <span>Línea PBX: (607) 635-1000</span>
+                </p>
+                <p class="small text-secondary mb-0 d-flex align-items-center gap-2">
+                    <i class="bi bi-envelope-fill text-primary"></i>
+                    <span>contacto@habitatprime.co</span>
+                </p>
             </div>
         </div>
-        <hr class="border-secondary my-4">
-        <div class="d-flex flex-wrap justify-content-between align-items-center small text-secondary">
-            <p class="mb-0">&copy; 2026 InmoGest. Todos los derechos reservados.</p>
-            <p class="mb-0">Arquitectura MVC &bull; Java EE 8 &bull; Apache Tomcat &bull; MySQL 3FN</p>
+
+        <div class="footer-bottom d-flex flex-wrap justify-content-between align-items-center gap-3 text-secondary">
+            <div>
+                &copy; 2026 <strong>Hábitat Prime</strong>. Bienes Raíces & Gestión Inmobiliaria.
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <span>Apache Tomcat 8.5+</span>
+                <span>&bull;</span>
+                <span>PostgreSQL / MySQL</span>
+                <span>&bull;</span>
+                <span>Scrum Agile</span>
+            </div>
         </div>
     </div>
 </footer>

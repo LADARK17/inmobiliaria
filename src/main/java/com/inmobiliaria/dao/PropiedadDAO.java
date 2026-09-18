@@ -6,9 +6,26 @@ import com.inmobiliaria.model.*;
 import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class PropiedadDAO {
+
+    // Caché en memoria para tablas maestras estáticas (evita viajes remotos innecesarios hacia Oregon)
+    private static volatile List<Ciudad> cacheCiudades = null;
+    private static volatile List<TipoPropiedad> cacheTipos = null;
+    private static volatile List<Caracteristica> cacheCaracteristicas = null;
+    private static volatile List<Inmobiliaria> cacheInmobiliarias = null;
+    private static final Object CACHE_LOCK = new Object();
+
+    public static void limpiarCacheCatalogos() {
+        synchronized (CACHE_LOCK) {
+            cacheCiudades = null;
+            cacheTipos = null;
+            cacheCaracteristicas = null;
+            cacheInmobiliarias = null;
+        }
+    }
 
     public List<Propiedad> listarDestacadas(int limit) throws SQLException {
         String sql = "SELECT p.*, c.nombre AS ciudad_nombre, c.departamento AS depto_nombre, " +
@@ -233,6 +250,10 @@ public class PropiedadDAO {
     }
 
     public boolean actualizar(Propiedad p, List<Integer> idCaracteristicas) throws SQLException {
+        return actualizar(p, idCaracteristicas, null);
+    }
+
+    public boolean actualizar(Propiedad p, List<Integer> idCaracteristicas, List<String> imagenesUrls) throws SQLException {
         String sql = "UPDATE propiedad SET id_ciudad = ?, id_tipo_propiedad = ?, matricula_inmobiliaria = ?, " +
                      "titulo = ?, descripcion = ?, precio = ?, area_m2 = ?, habitaciones = ?, banos = ?, " +
                      "estrato = ?, direccion = ?, destacada = ?, tipo_operacion = ?, estado = ? " +
@@ -280,6 +301,29 @@ public class PropiedadDAO {
                 }
             }
 
+            if (imagenesUrls != null && !imagenesUrls.isEmpty()) {
+                try (PreparedStatement psDelImg = conn.prepareStatement("DELETE FROM imagen_propiedad WHERE id_propiedad = ?")) {
+                    psDelImg.setInt(1, p.getId());
+                    psDelImg.executeUpdate();
+                }
+
+                String sqlImg = "INSERT INTO imagen_propiedad (id_propiedad, url_imagen, orden, es_principal) VALUES (?, ?, ?, ?)";
+                try (PreparedStatement psI = conn.prepareStatement(sqlImg)) {
+                    int orden = 1;
+                    for (String url : imagenesUrls) {
+                        if (url != null && !url.trim().isEmpty()) {
+                            psI.setInt(1, p.getId());
+                            psI.setString(2, url.trim());
+                            psI.setInt(3, orden);
+                            psI.setBoolean(4, orden == 1);
+                            psI.addBatch();
+                            orden++;
+                        }
+                    }
+                    psI.executeBatch();
+                }
+            }
+
             conn.commit();
             return true;
         } catch (SQLException e) {
@@ -307,63 +351,99 @@ public class PropiedadDAO {
     }
 
     public List<Ciudad> listarCiudades() throws SQLException {
-        List<Ciudad> lista = new ArrayList<>();
-        String sql = "SELECT id, nombre, departamento FROM ciudad ORDER BY nombre ASC";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                lista.add(new Ciudad(rs.getInt("id"), rs.getString("nombre"), rs.getString("departamento")));
-            }
+        if (cacheCiudades != null) {
+            return new ArrayList<>(cacheCiudades);
         }
-        return lista;
+        synchronized (CACHE_LOCK) {
+            if (cacheCiudades != null) {
+                return new ArrayList<>(cacheCiudades);
+            }
+            List<Ciudad> lista = new ArrayList<>();
+            String sql = "SELECT id, nombre, departamento FROM ciudad ORDER BY nombre ASC";
+            try (Connection conn = DatabaseConnection.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql);
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(new Ciudad(rs.getInt("id"), rs.getString("nombre"), rs.getString("departamento")));
+                }
+            }
+            cacheCiudades = Collections.unmodifiableList(lista);
+            return new ArrayList<>(cacheCiudades);
+        }
     }
 
     public List<TipoPropiedad> listarTiposPropiedad() throws SQLException {
-        List<TipoPropiedad> lista = new ArrayList<>();
-        String sql = "SELECT id, nombre, descripcion FROM tipo_propiedad ORDER BY nombre ASC";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                lista.add(new TipoPropiedad(rs.getInt("id"), rs.getString("nombre"), rs.getString("descripcion")));
-            }
+        if (cacheTipos != null) {
+            return new ArrayList<>(cacheTipos);
         }
-        return lista;
+        synchronized (CACHE_LOCK) {
+            if (cacheTipos != null) {
+                return new ArrayList<>(cacheTipos);
+            }
+            List<TipoPropiedad> lista = new ArrayList<>();
+            String sql = "SELECT id, nombre, descripcion FROM tipo_propiedad ORDER BY nombre ASC";
+            try (Connection conn = DatabaseConnection.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql);
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(new TipoPropiedad(rs.getInt("id"), rs.getString("nombre"), rs.getString("descripcion")));
+                }
+            }
+            cacheTipos = Collections.unmodifiableList(lista);
+            return new ArrayList<>(cacheTipos);
+        }
     }
 
     public List<Caracteristica> listarCaracteristicas() throws SQLException {
-        List<Caracteristica> lista = new ArrayList<>();
-        String sql = "SELECT id, nombre, icono FROM caracteristica ORDER BY nombre ASC";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                lista.add(new Caracteristica(rs.getInt("id"), rs.getString("nombre"), rs.getString("icono")));
-            }
+        if (cacheCaracteristicas != null) {
+            return new ArrayList<>(cacheCaracteristicas);
         }
-        return lista;
+        synchronized (CACHE_LOCK) {
+            if (cacheCaracteristicas != null) {
+                return new ArrayList<>(cacheCaracteristicas);
+            }
+            List<Caracteristica> lista = new ArrayList<>();
+            String sql = "SELECT id, nombre, icono FROM caracteristica ORDER BY nombre ASC";
+            try (Connection conn = DatabaseConnection.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql);
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(new Caracteristica(rs.getInt("id"), rs.getString("nombre"), rs.getString("icono")));
+                }
+            }
+            cacheCaracteristicas = Collections.unmodifiableList(lista);
+            return new ArrayList<>(cacheCaracteristicas);
+        }
     }
 
     public List<Inmobiliaria> listarInmobiliarias() throws SQLException {
-        List<Inmobiliaria> lista = new ArrayList<>();
-        String sql = "SELECT id, nombre, nit, telefono, correo, direccion, logo_url FROM inmobiliaria ORDER BY nombre ASC";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                Inmobiliaria in = new Inmobiliaria();
-                in.setId(rs.getInt("id"));
-                in.setNombre(rs.getString("nombre"));
-                in.setNit(rs.getString("nit"));
-                in.setTelefono(rs.getString("telefono"));
-                in.setCorreo(rs.getString("correo"));
-                in.setDireccion(rs.getString("direccion"));
-                in.setLogoUrl(rs.getString("logo_url"));
-                lista.add(in);
-            }
+        if (cacheInmobiliarias != null) {
+            return new ArrayList<>(cacheInmobiliarias);
         }
-        return lista;
+        synchronized (CACHE_LOCK) {
+            if (cacheInmobiliarias != null) {
+                return new ArrayList<>(cacheInmobiliarias);
+            }
+            List<Inmobiliaria> lista = new ArrayList<>();
+            String sql = "SELECT id, nombre, nit, telefono, correo, direccion, logo_url FROM inmobiliaria ORDER BY nombre ASC";
+            try (Connection conn = DatabaseConnection.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql);
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Inmobiliaria in = new Inmobiliaria();
+                    in.setId(rs.getInt("id"));
+                    in.setNombre(rs.getString("nombre"));
+                    in.setNit(rs.getString("nit"));
+                    in.setTelefono(rs.getString("telefono"));
+                    in.setCorreo(rs.getString("correo"));
+                    in.setDireccion(rs.getString("direccion"));
+                    in.setLogoUrl(rs.getString("logo_url"));
+                    lista.add(in);
+                }
+            }
+            cacheInmobiliarias = Collections.unmodifiableList(lista);
+            return new ArrayList<>(cacheInmobiliarias);
+        }
     }
 
     private void cargarImagenes(Connection conn, Propiedad p) throws SQLException {

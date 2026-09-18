@@ -192,7 +192,13 @@ public class AgenteController extends HttpServlet {
             for (String cid : caracIds) listCaracs.add(Integer.parseInt(cid));
         }
 
-        propiedadDAO.actualizar(p, listCaracs);
+        String urlsImgParam = req.getParameter("imagenesUrls");
+        List<String> urls = null;
+        if (urlsImgParam != null && !urlsImgParam.trim().isEmpty()) {
+            urls = Arrays.asList(urlsImgParam.split("\n"));
+        }
+
+        propiedadDAO.actualizar(p, listCaracs, urls);
         auditoriaDAO.registrar(new Auditoria(u.getId(), "ACTUALIZAR_PROPIEDAD", "propiedad", id, "Modificación de datos del inmueble", req.getRemoteAddr()));
         resp.sendRedirect(req.getContextPath() + "/agente/propiedades?exito=Propiedad+actualizada+correctamente.");
     }

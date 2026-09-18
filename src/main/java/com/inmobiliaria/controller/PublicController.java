@@ -43,7 +43,7 @@ public class PublicController extends HttpServlet {
     }
 
     private void mostrarLanding(HttpServletRequest req, HttpServletResponse resp) throws SQLException, ServletException, IOException {
-        List<Propiedad> destacadas = propiedadDAO.listarDestacadas(6);
+        List<Propiedad> destacadas = propiedadDAO.listarDestacadas(12);
         req.setAttribute("destacadas", destacadas);
         req.setAttribute("ciudades", propiedadDAO.listarCiudades());
         req.setAttribute("tipos", propiedadDAO.listarTiposPropiedad());

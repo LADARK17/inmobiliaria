@@ -6,57 +6,65 @@
 <%@ include file="/WEB-INF/views/common/navbar.jspf" %>
 <%@ include file="/WEB-INF/views/common/alerts.jspf" %>
 
-<main class="container my-5">
+<main class="container my-4 my-lg-5">
     <!-- Header del Dashboard -->
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
-        <div>
-            <h3 class="fw-bold mb-1">¡Hola, ${sessionScope.nombre_usuario}!</h3>
-            <p class="text-muted mb-0">Bienvenido a tu panel de cliente para gestión de favoritos, visitas y trámites.</p>
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3 bg-white p-4 rounded-4 border shadow-sm">
+        <div class="d-flex align-items-center gap-3">
+            <div class="brand-icon-box bg-primary text-white rounded-circle" style="width: 52px; height: 52px; font-size: 1.5rem;">
+                <i class="bi bi-person-fill"></i>
+            </div>
+            <div>
+                <div class="d-flex align-items-center gap-2">
+                    <h3 class="fw-bold mb-0 text-dark">¡Hola, ${sessionScope.nombre_usuario}!</h3>
+                    <span class="badge badge-role-client rounded-pill">Cliente</span>
+                </div>
+                <p class="text-muted small mb-0">Panel de control personal para seguimiento de inmuebles, visitas presenciales y trámites.</p>
+            </div>
         </div>
         <div>
-            <a href="${pageContext.request.contextPath}/catalogo" class="btn btn-primary rounded-pill btn-sm px-3">
+            <a href="${pageContext.request.contextPath}/catalogo" class="btn btn-primary rounded-pill px-4 shadow-sm">
                 <i class="bi bi-search me-1"></i> Explorar Inmuebles
             </a>
         </div>
     </div>
 
-    <!-- Tarjetas de Estadísticas / Accesos Rápidos -->
-    <div class="row g-4 mb-5">
+    <!-- Tarjetas de Estadísticas KPI -->
+    <div class="row g-4 mb-4">
         <div class="col-md-4">
             <a href="${pageContext.request.contextPath}/cliente/favoritos" class="text-decoration-none">
-                <div class="stat-card">
-                    <div class="stat-icon bg-danger-subtle text-danger">
+                <div class="kpi-card" style="--kpi-accent: #ef4444; --kpi-bg: #fee2e2;">
+                    <div class="kpi-icon-box" style="color: #ef4444;">
                         <i class="bi bi-heart-fill"></i>
                     </div>
                     <div>
-                        <span class="text-muted small d-block">Mis Favoritos</span>
-                        <h3 class="fw-bold mb-0 text-dark">${totalFavoritos}</h3>
+                        <div class="kpi-number">${totalFavoritos}</div>
+                        <div class="kpi-label">Mis Favoritos</div>
                     </div>
                 </div>
             </a>
         </div>
         <div class="col-md-4">
             <a href="${pageContext.request.contextPath}/cliente/citas" class="text-decoration-none">
-                <div class="stat-card">
-                    <div class="stat-icon bg-primary-subtle text-primary">
-                        <i class="bi bi-calendar-check-fill"></i>
+                <div class="kpi-card" style="--kpi-accent: #1d4ed8; --kpi-bg: #dbeafe;">
+                    <div class="kpi-icon-box" style="color: #1d4ed8;">
+                        <i class="bi bi-calendar2-check-fill"></i>
                     </div>
                     <div>
-                        <span class="text-muted small d-block">Visitas Solicitadas</span>
-                        <h3 class="fw-bold mb-0 text-dark">${totalCitas}</h3>
+                        <div class="kpi-number">${totalCitas}</div>
+                        <div class="kpi-label">Visitas Solicitadas</div>
                     </div>
                 </div>
             </a>
         </div>
         <div class="col-md-4">
             <a href="${pageContext.request.contextPath}/cliente/solicitudes" class="text-decoration-none">
-                <div class="stat-card">
-                    <div class="stat-icon bg-success-subtle text-success">
+                <div class="kpi-card" style="--kpi-accent: #10b981; --kpi-bg: #d1fae5;">
+                    <div class="kpi-icon-box" style="color: #10b981;">
                         <i class="bi bi-file-earmark-text-fill"></i>
                     </div>
                     <div>
-                        <span class="text-muted small d-block">Trámites Radicados</span>
-                        <h3 class="fw-bold mb-0 text-dark">${totalSolicitudes}</h3>
+                        <div class="kpi-number">${totalSolicitudes}</div>
+                        <div class="kpi-label">Trámites Radicados</div>
                     </div>
                 </div>
             </a>
@@ -66,29 +74,32 @@
     <div class="row g-4">
         <!-- Próximas Citas -->
         <div class="col-lg-6">
-            <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+            <div class="table-card h-100 p-4">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="fw-bold mb-0"><i class="bi bi-calendar2-event text-primary me-2"></i>Mis Próximas Visitas</h5>
-                    <a href="${pageContext.request.contextPath}/cliente/citas" class="small text-decoration-none">Ver todas</a>
+                    <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-calendar2-event text-primary me-2"></i>Mis Próximas Visitas</h5>
+                    <a href="${pageContext.request.contextPath}/cliente/citas" class="small text-primary text-decoration-none fw-semibold">
+                        Ver todas <i class="bi bi-arrow-right"></i>
+                    </a>
                 </div>
 
                 <c:choose>
                     <c:when test="${empty citasRecientes}">
-                        <div class="text-center py-4 text-muted">
-                            <i class="bi bi-calendar-x fs-2 mb-2 d-block"></i>
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-calendar-x fs-1 mb-2 d-block text-secondary opacity-50"></i>
                             <p class="small mb-0">No tienes citas agendadas actualmente.</p>
+                            <a href="${pageContext.request.contextPath}/catalogo" class="btn btn-outline-primary btn-sm rounded-pill mt-3">Agendar Visita</a>
                         </div>
                     </c:when>
                     <c:otherwise>
                         <div class="list-group list-group-flush">
                             <c:forEach var="c" items="${citasRecientes}">
-                                <div class="list-group-item px-0 py-3 d-flex justify-content-between align-items-center">
+                                <div class="list-group-item px-0 py-3 d-flex justify-content-between align-items-center border-bottom">
                                     <div>
-                                        <h6 class="fw-bold mb-1">${c.propiedadTitulo}</h6>
-                                        <small class="text-muted d-block"><i class="bi bi-clock me-1"></i>${c.fechaHora}</small>
-                                        <small class="text-muted"><i class="bi bi-buildings me-1"></i>${c.inmobiliariaNombre}</small>
+                                        <h6 class="fw-bold mb-1 text-dark">${c.propiedadTitulo}</h6>
+                                        <div class="small text-muted mb-1"><i class="bi bi-clock me-1 text-primary"></i>${c.fechaHora}</div>
+                                        <div class="small text-secondary"><i class="bi bi-buildings me-1 text-muted"></i>${c.inmobiliariaNombre}</div>
                                     </div>
-                                    <span class="badge ${c.estado == 'CONFIRMADA' ? 'bg-success' : (c.estado == 'PENDIENTE' ? 'bg-warning text-dark' : 'bg-secondary')} rounded-pill px-3 py-2">
+                                    <span class="status-badge ${c.estado == 'CONFIRMADA' ? 'status-activa' : (c.estado == 'PENDIENTE' ? 'status-pendiente' : 'status-inactiva')}">
                                         ${c.estado}
                                     </span>
                                 </div>
@@ -101,29 +112,32 @@
 
         <!-- Trámites Recientes -->
         <div class="col-lg-6">
-            <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+            <div class="table-card h-100 p-4">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="fw-bold mb-0"><i class="bi bi-folder text-success me-2"></i>Estado de Mis Trámites</h5>
-                    <a href="${pageContext.request.contextPath}/cliente/solicitudes" class="small text-decoration-none">Ver todos</a>
+                    <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-folder-check text-success me-2"></i>Estado de Mis Trámites</h5>
+                    <a href="${pageContext.request.contextPath}/cliente/solicitudes" class="small text-success text-decoration-none fw-semibold">
+                        Ver todos <i class="bi bi-arrow-right"></i>
+                    </a>
                 </div>
 
                 <c:choose>
                     <c:when test="${empty solicitudesRecientes}">
-                        <div class="text-center py-4 text-muted">
-                            <i class="bi bi-folder-x fs-2 mb-2 d-block"></i>
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-folder-x fs-1 mb-2 d-block text-secondary opacity-50"></i>
                             <p class="small mb-0">No tienes solicitudes de compra o arriendo activas.</p>
+                            <a href="${pageContext.request.contextPath}/catalogo" class="btn btn-outline-success btn-sm rounded-pill mt-3">Explorar Inmuebles</a>
                         </div>
                     </c:when>
                     <c:otherwise>
                         <div class="list-group list-group-flush">
                             <c:forEach var="s" items="${solicitudesRecientes}">
-                                <div class="list-group-item px-0 py-3 d-flex justify-content-between align-items-center">
+                                <div class="list-group-item px-0 py-3 d-flex justify-content-between align-items-center border-bottom">
                                     <div>
-                                        <h6 class="fw-bold mb-1">${s.propiedadTitulo}</h6>
-                                        <small class="text-muted d-block">Tipo: <strong>${s.tipoOperacion}</strong> | Radicado: ${s.fechaSolicitud}</small>
-                                        <small class="text-muted">Documentos radicados: ${s.documentos.size()}</small>
+                                        <h6 class="fw-bold mb-1 text-dark">${s.propiedadTitulo}</h6>
+                                        <div class="small text-muted mb-1">Tipo: <strong>${s.tipoOperacion}</strong> &bull; Radicado: ${s.fechaSolicitud}</div>
+                                        <div class="small text-secondary"><i class="bi bi-paperclip me-1 text-primary"></i>Documentos adjuntos: ${s.documentos.size()}</div>
                                     </div>
-                                    <span class="badge ${s.estado == 'APROBADA' ? 'bg-success' : (s.estado == 'EN_REVISION' ? 'bg-info text-dark' : (s.estado == 'RECHAZADA' ? 'bg-danger' : 'bg-warning text-dark'))} rounded-pill px-3 py-2">
+                                    <span class="status-badge ${s.estado == 'APROBADA' ? 'status-activa' : (s.estado == 'EN_REVISION' ? 'status-agendada' : (s.estado == 'RECHAZADA' ? 'status-inactiva' : 'status-pendiente'))}">
                                         ${s.estado}
                                     </span>
                                 </div>

@@ -1,0 +1,21 @@
+# ==========================================================
+# CONFIGURACIÓN DE CONEXIÓN A BASE DE DATOS (JDBC)
+# Copia este archivo a db.properties y rellena los valores
+# ==========================================================
+
+# Supabase (PostgreSQL en la nube)
+db.driver=org.postgresql.Driver
+db.url=jdbc:postgresql://<HOST>.pooler.supabase.com:5432/postgres?sslmode=require
+db.user=postgres.<PROJECT_REF>
+db.password=<TU_CONTRASEÑA>
+
+# Opciones de Conexión
+db.pool.maxConnections=10
+db.pool.timeoutSeconds=10
+
+# ----------------------------------------------------------
+# ALMACENAMIENTO DE FOTOGRAFÍAS EN LA NUBE (Cloudinary)
+# ----------------------------------------------------------
+cloud.name=<CLOUD_NAME>
+cloud.apiKey=<API_KEY>
+cloud.apiSecret=<API_SECRET>

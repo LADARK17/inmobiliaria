@@ -7,9 +7,15 @@ import com.inmobiliaria.model.Usuario;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class UsuarioDAO {
+
+    private static volatile List<Rol> cacheRoles = null;
+    private static final Object ROL_LOCK = new Object();
 
     public Usuario findByCorreo(String correo) throws SQLException {
         String sql = "SELECT u.id, u.correo, u.password_hash, u.estado, u.id_inmobiliaria, u.fecha_registro, " +
@@ -118,6 +124,8 @@ public class UsuarioDAO {
 
     public List<Usuario> listarTodos() throws SQLException {
         List<Usuario> lista = new ArrayList<>();
+        Map<Integer, Usuario> mapaUsuarios = new HashMap<>();
+
         String sql = "SELECT u.id, u.correo, u.password_hash, u.estado, u.id_inmobiliaria, u.fecha_registro, " +
                      "p.id AS perfil_id, p.nombres, p.apellidos, p.documento_identidad, p.telefono, p.direccion, p.foto_url " +
                      "FROM usuario u " +
@@ -129,8 +137,26 @@ public class UsuarioDAO {
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 Usuario u = mapUsuario(rs);
-                cargarRoles(conn, u);
+                u.setRoles(new ArrayList<>());
                 lista.add(u);
+                mapaUsuarios.put(u.getId(), u);
+            }
+
+            // Carga de todos los roles en una sola consulta relacional en lote (elimina N+1 queries)
+            if (!lista.isEmpty()) {
+                String sqlRoles = "SELECT ur.id_usuario, r.id, r.nombre, r.descripcion " +
+                                 "FROM rol r " +
+                                 "INNER JOIN usuario_rol ur ON r.id = ur.id_rol";
+                try (PreparedStatement psRoles = conn.prepareStatement(sqlRoles);
+                     ResultSet rsRoles = psRoles.executeQuery()) {
+                    while (rsRoles.next()) {
+                        int idUsuario = rsRoles.getInt("id_usuario");
+                        Usuario u = mapaUsuarios.get(idUsuario);
+                        if (u != null) {
+                            u.getRoles().add(new Rol(rsRoles.getInt("id"), rsRoles.getString("nombre"), rsRoles.getString("descripcion")));
+                        }
+                    }
+                }
             }
         }
         return lista;
@@ -167,16 +193,25 @@ public class UsuarioDAO {
     }
 
     public List<Rol> listarRoles() throws SQLException {
-        List<Rol> lista = new ArrayList<>();
-        String sql = "SELECT id, nombre, descripcion FROM rol ORDER BY id ASC";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                lista.add(new Rol(rs.getInt("id"), rs.getString("nombre"), rs.getString("descripcion")));
-            }
+        if (cacheRoles != null) {
+            return new ArrayList<>(cacheRoles);
         }
-        return lista;
+        synchronized (ROL_LOCK) {
+            if (cacheRoles != null) {
+                return new ArrayList<>(cacheRoles);
+            }
+            List<Rol> lista = new ArrayList<>();
+            String sql = "SELECT id, nombre, descripcion FROM rol ORDER BY id ASC";
+            try (Connection conn = DatabaseConnection.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql);
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(new Rol(rs.getInt("id"), rs.getString("nombre"), rs.getString("descripcion")));
+                }
+            }
+            cacheRoles = Collections.unmodifiableList(lista);
+            return new ArrayList<>(cacheRoles);
+        }
     }
 
     private void cargarRoles(Connection conn, Usuario u) throws SQLException {
