@@ -1,9 +1,9 @@
 package com.inmobiliaria.util;
 
-import com.inmobiliaria.config.DatabaseConnection;
 
 import java.io.*;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -59,7 +59,7 @@ public class CloudUploadUtil {
         String endpoint = "https://api.cloudinary.com/v1_1/" + cloudName + "/image/upload";
         String boundary = "===Boundary" + System.currentTimeMillis() + "===";
 
-        URL url = new URL(endpoint);
+        URL url = URI.create(endpoint).toURL();
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setDoOutput(true);
         conn.setDoInput(true);

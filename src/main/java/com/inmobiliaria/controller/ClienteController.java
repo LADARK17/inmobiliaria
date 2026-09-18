@@ -32,7 +32,6 @@ public class ClienteController extends HttpServlet {
     private FavoritoDAO favoritoDAO = new FavoritoDAO();
     private CitaDAO citaDAO = new CitaDAO();
     private SolicitudDAO solicitudDAO = new SolicitudDAO();
-    private PropiedadDAO propiedadDAO = new PropiedadDAO();
     private AuditoriaDAO auditoriaDAO = new AuditoriaDAO();
 
     @Override
