@@ -4,6 +4,7 @@ import com.inmobiliaria.config.DatabaseConnection;
 import com.inmobiliaria.model.Cita;
 
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +21,36 @@ public class CitaDAO {
             ps.setString(4, c.getComentarios());
             return ps.executeUpdate() > 0;
         }
+    }
+
+    public boolean existeCitaActiva(int idPropiedad, LocalDateTime fechaHora) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM cita " +
+                     "WHERE id_propiedad = ? AND fecha_hora = ? AND estado <> 'CANCELADA'";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idPropiedad);
+            ps.setTimestamp(2, Timestamp.valueOf(fechaHora));
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt(1) > 0;
+            }
+        }
+    }
+
+    public List<LocalDateTime> listarHorariosOcupados(int idPropiedad) throws SQLException {
+        String sql = "SELECT fecha_hora FROM cita " +
+                     "WHERE id_propiedad = ? AND estado <> 'CANCELADA' ORDER BY fecha_hora";
+        List<LocalDateTime> ocupados = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idPropiedad);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Timestamp ts = rs.getTimestamp("fecha_hora");
+                    if (ts != null) ocupados.add(ts.toLocalDateTime());
+                }
+            }
+        }
+        return ocupados;
     }
 
     public List<Cita> listarPorCliente(int idCliente) throws SQLException {

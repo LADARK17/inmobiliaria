@@ -45,3 +45,58 @@ function fillCredentials(correo, pass) {
         passwordInput.classList.add('is-valid');
     }
 }
+
+// Agendamiento de citas por turno único: bloquea fechas pasadas y turnos ya ocupados
+const inputFechaCita = document.getElementById('inputFechaCita');
+if (inputFechaCita) {
+    const feedback = document.getElementById('feedbackCitaTurno');
+    const ocupados = Array.isArray(window.TURNOS_OCUPADOS) ? window.TURNOS_OCUPADOS : [];
+
+    const aMinutos = (v) => (v ? String(v).slice(0, 16) : null);
+    const formatoLocal = (d) => {
+        const pad = (n) => String(n).padStart(2, '0');
+        return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
+               'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+    };
+
+    const minimo = new Date(Date.now() + 60 * 60 * 1000);
+    inputFechaCita.min = formatoLocal(minimo);
+
+    const validar = () => {
+        const sel = aMinutos(inputFechaCita.value);
+        let mensaje = '';
+        if (!sel) {
+            inputFechaCita.classList.remove('is-valid');
+            inputFechaCita.classList.remove('is-invalid');
+            if (feedback) feedback.textContent = '';
+            return;
+        }
+        if (ocupados.includes(sel)) {
+            mensaje = 'Este horario ya está reservado por otro cliente. Elija otro turno.';
+            inputFechaCita.classList.add('is-invalid');
+            inputFechaCita.classList.remove('is-valid');
+        } else if (sel < formatoLocal(minimo)) {
+            mensaje = 'La visita debe agendarse al menos 1 hora después del momento actual.';
+            inputFechaCita.classList.add('is-invalid');
+            inputFechaCita.classList.remove('is-valid');
+        } else {
+            inputFechaCita.classList.remove('is-invalid');
+            inputFechaCita.classList.add('is-valid');
+        }
+        if (feedback) feedback.textContent = mensaje;
+    };
+
+    inputFechaCita.addEventListener('input', validar);
+    document.getElementById('modalCita').addEventListener('shown.bs.modal', validar);
+
+    const formCita = document.querySelector('#modalCita form');
+    if (formCita) {
+        formCita.addEventListener('submit', (e) => {
+            const sel = aMinutos(inputFechaCita.value);
+            if (!sel || ocupados.includes(sel) || sel < formatoLocal(minimo)) {
+                e.preventDefault();
+                validar();
+            }
+        });
+    }
+}

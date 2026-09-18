@@ -194,16 +194,19 @@ CREATE TABLE favorito (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tabla Citas (Agendamiento de visitas)
--- RESTRICCIÓN OBLIGATORIA: UNIQUE(id_propiedad, fecha_hora) para impedir doble reserva
+-- TURNO ÚNICO POR INMUEBLE: UNIQUE(id_propiedad, slot_turno) impide doble reserva
+-- del mismo horario. La columna generada slot_turno es NULL cuando la cita se cancela
+-- (las filas NULL no colisionan en UNIQUE), por lo que un horario cancelado queda liberado.
 CREATE TABLE cita (
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_cliente INT NOT NULL,
     id_propiedad INT NOT NULL,
     fecha_hora DATETIME NOT NULL,
     estado ENUM('PENDIENTE', 'CONFIRMADA', 'REALIZADA', 'CANCELADA') DEFAULT 'PENDIENTE',
+    slot_turno DATETIME GENERATED ALWAYS AS (IF(estado = 'CANCELADA', NULL, fecha_hora)) STORED,
     comentarios VARCHAR(255),
     fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT uq_cita_propiedad_horario UNIQUE (id_propiedad, fecha_hora),
+    CONSTRAINT uq_cita_slot_turno UNIQUE (id_propiedad, slot_turno),
     CONSTRAINT fk_cita_cliente FOREIGN KEY (id_cliente) 
         REFERENCES usuario(id) ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT fk_cita_propiedad FOREIGN KEY (id_propiedad) 

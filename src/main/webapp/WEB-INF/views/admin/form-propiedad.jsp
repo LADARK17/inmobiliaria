@@ -1,6 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<c:set var="pageTitle" value="${esEdicion ? 'Editar Inmueble' : 'Publicar Nuevo Inmueble'}" />
+<c:set var="pageTitle" value="${esEdicion ? 'Actualizar Inmueble' : 'Subir Nuevo Inmueble'}" />
 <%@ include file="/WEB-INF/views/common/header.jspf" %>
 <%@ include file="/WEB-INF/views/common/navbar.jspf" %>
 <%@ include file="/WEB-INF/views/common/alerts.jspf" %>
@@ -11,18 +11,28 @@
             <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5">
                 <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
                     <div>
-                        <h3 class="fw-bold text-dark mb-1">${esEdicion ? 'Editar Propiedad' : 'Publicar Nueva Propiedad'}</h3>
-                        <p class="text-muted small mb-0">Complete la información requerida del inmueble. La matrícula inmobiliaria debe ser única.</p>
+                        <h3 class="fw-bold text-dark mb-1">${esEdicion ? 'Actualizar Inmueble del Catálogo' : 'Subir Nuevo Inmueble al Catálogo'}</h3>
+                        <p class="text-muted small mb-0">Ingrese los datos requeridos del inmueble. La matrícula inmobiliaria debe ser única.</p>
                     </div>
-                    <a href="${pageContext.request.contextPath}/agente/propiedades" class="btn btn-outline-secondary btn-sm rounded-pill">
-                        <i class="bi bi-arrow-left me-1"></i> Volver al Listado
+                    <a href="${pageContext.request.contextPath}/admin/propiedades" class="btn btn-outline-secondary btn-sm rounded-pill">
+                        <i class="bi bi-arrow-left me-1"></i> Volver al Catálogo
                     </a>
                 </div>
 
-                <form action="${pageContext.request.contextPath}/agente/${esEdicion ? 'editar-propiedad' : 'crear-propiedad'}" method="POST" class="row g-3" id="formPropiedad">
+                <form action="${pageContext.request.contextPath}/admin/${esEdicion ? 'editar-propiedad' : 'crear-propiedad'}" method="POST" class="row g-3" id="formPropiedad">
                     <c:if test="${esEdicion}">
                         <input type="hidden" name="id" value="${propiedad.id}">
                     </c:if>
+
+                    <!-- Inmobiliaria (Solo Admin) -->
+                    <div class="col-12 border-bottom pb-3">
+                        <label class="form-label small fw-semibold">Inmobiliaria Propietaria de la Publicación *</label>
+                        <select name="idInmobiliaria" class="form-select" required>
+                            <c:forEach var="inm" items="${inmobiliarias}">
+                                <option value="${inm.id}" ${(not empty propiedad && propiedad.idInmobiliaria == inm.id) ? 'selected' : ''}>${inm.nombre} (${inm.correo})</option>
+                            </c:forEach>
+                        </select>
+                    </div>
 
                     <!-- Título -->
                     <div class="col-md-8">
@@ -42,7 +52,7 @@
                         <label class="form-label small fw-semibold">Ciudad de Ubicación *</label>
                         <select name="idCiudad" class="form-select" required>
                             <c:forEach var="c" items="${ciudades}">
-                                <option value="${c.id}" ${propiedad.idCiudad == c.id ? 'selected' : ''}>${c.nombre} (${c.departamento})</option>
+                                <option value="${c.id}" ${not empty propiedad && propiedad.idCiudad == c.id ? 'selected' : ''}>${c.nombre} (${c.departamento})</option>
                             </c:forEach>
                         </select>
                     </div>
@@ -51,7 +61,7 @@
                         <label class="form-label small fw-semibold">Tipo de Propiedad *</label>
                         <select name="idTipoPropiedad" class="form-select" required>
                             <c:forEach var="t" items="${tipos}">
-                                <option value="${t.id}" ${propiedad.idTipoPropiedad == t.id ? 'selected' : ''}>${t.nombre}</option>
+                                <option value="${t.id}" ${not empty propiedad && propiedad.idTipoPropiedad == t.id ? 'selected' : ''}>${t.nombre}</option>
                             </c:forEach>
                         </select>
                     </div>
@@ -77,7 +87,7 @@
                             <option value="RESERVADA" ${propiedad.estado == 'RESERVADA' ? 'selected' : ''}>RESERVADA</option>
                             <option value="VENDIDA" ${propiedad.estado == 'VENDIDA' ? 'selected' : ''}>VENDIDA</option>
                             <option value="ARRENDADA" ${propiedad.estado == 'ARRENDADA' ? 'selected' : ''}>ARRENDADA</option>
-                            <option value="INACTIVA" ${propiedad.estado == 'INACTIVA' ? 'selected' : ''}>INACTIVA (Baja Lógica)</option>
+                            <option value="INACTIVA" ${propiedad.estado == 'INACTIVA' ? 'selected' : ''}>INACTIVA (Fuera de Catálogo)</option>
                         </select>
                     </div>
 
@@ -139,10 +149,10 @@
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <div>
                                 <label class="form-label fw-bold text-dark mb-0">
-                                    <i class="bi bi-images text-primary me-1"></i> Galería de Fotografías del Inmueble (1:N)
+                                    <i class="bi bi-images text-primary me-1"></i> Fotografías del Inmueble (1:N)
                                 </label>
                                 <p class="small text-muted mb-0">
-                                    Sube las fotografías directamente desde tu equipo. Se almacenan de forma permanente en la nube y se genera automáticamente su URL pública. La primera imagen será la portada principal.
+                                    Sube las fotos directamente desde tu equipo. Se almacenan de forma permanente en la nube y se genera automáticamente su enlace público. La primera imagen será la portada principal.
                                 </p>
                             </div>
                         </div>
@@ -172,7 +182,7 @@
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span class="small fw-semibold text-secondary" id="totalFotosLabel">0 fotografías cargadas</span>
                                 <button type="button" class="btn btn-link text-decoration-none btn-sm text-muted p-0" onclick="toggleManualUrlInput()">
-                                    <i class="bi bi-link-45deg"></i> O agregar por URL directa
+                                    <i class="bi bi-link-45deg"></i> O agregar por enlace directo
                                 </button>
                             </div>
 
@@ -182,7 +192,7 @@
                                 <div class="input-group">
                                     <input type="url" id="manualUrlInput" class="form-control form-control-sm" placeholder="https://images.unsplash.com/photo-...">
                                     <button class="btn btn-outline-primary btn-sm" type="button" onclick="agregarUrlManual()">
-                                        <i class="bi bi-plus-lg me-1"></i> Agregar URL
+                                        <i class="bi bi-plus-lg me-1"></i> Agregar Enlace
                                     </button>
                                 </div>
                             </div>
@@ -206,9 +216,9 @@
                     </div>
 
                     <div class="col-12 text-end border-top pt-4">
-                        <a href="${pageContext.request.contextPath}/agente/propiedades" class="btn btn-light rounded-pill px-4 me-2">Cancelar</a>
+                        <a href="${pageContext.request.contextPath}/admin/propiedades" class="btn btn-light rounded-pill px-4 me-2">Cancelar</a>
                         <button type="submit" class="btn btn-primary rounded-pill px-5 fw-semibold shadow-sm">
-                            <i class="bi bi-check2-circle me-1"></i> ${esEdicion ? 'Actualizar Propiedad' : 'Publicar Inmueble'}
+                            <i class="bi bi-check2-circle me-1"></i> ${esEdicion ? 'Actualizar Inmueble' : 'Subir Inmueble al Catálogo'}
                         </button>
                     </div>
                 </form>
@@ -218,10 +228,8 @@
 </main>
 
 <script>
-// Array que almacena las URLs de las fotografías de la galería
 let fotosGaleria = [];
 
-// Si estamos en modo edición, precargar las fotografías existentes
 <c:if test="${esEdicion && not empty propiedad.imagenes}">
     <c:forEach var="img" items="${propiedad.imagenes}">
         fotosGaleria.push('${img.urlImagen}');
@@ -231,7 +239,6 @@ let fotosGaleria = [];
 document.addEventListener('DOMContentLoaded', () => {
     actualizarVistaFotos();
 
-    // Soporte para arrastrar y soltar (Drag & Drop)
     const dropZone = document.getElementById('dropZoneFotos');
     if (dropZone) {
         ['dragenter', 'dragover'].forEach(eventName => {
@@ -260,7 +267,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Función para subir archivos a través del servlet en la nube
 async function procesarArchivosFotos(fileList) {
     if (!fileList || fileList.length === 0) return;
 
@@ -304,14 +310,13 @@ async function procesarArchivosFotos(fileList) {
     document.getElementById('inputFotosArchivo').value = '';
 }
 
-// Función para agregar una URL manualmente
 function agregarUrlManual() {
     const input = document.getElementById('manualUrlInput');
     const url = input.value ? input.value.trim() : '';
     if (!url) return;
 
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        alert('Por favor ingrese una URL válida que empiece por http:// o https://');
+        alert('Por favor ingrese un enlace válido que empiece por http:// o https://');
         return;
     }
 
@@ -325,7 +330,6 @@ function toggleManualUrlInput() {
     box.classList.toggle('d-none');
 }
 
-// Eliminar una fotografía de la lista
 function eliminarFoto(index) {
     if (index >= 0 && index < fotosGaleria.length) {
         fotosGaleria.splice(index, 1);
@@ -333,7 +337,6 @@ function eliminarFoto(index) {
     }
 }
 
-// Mover una fotografía al primer lugar (Foto Principal)
 function establecerComoPrincipal(index) {
     if (index > 0 && index < fotosGaleria.length) {
         const foto = fotosGaleria.splice(index, 1)[0];
@@ -342,7 +345,6 @@ function establecerComoPrincipal(index) {
     }
 }
 
-// Actualiza las miniaturas y sincroniza el textarea para el envío en BD
 function actualizarVistaFotos() {
     const contenedor = document.getElementById('contenedorPreviewFotos');
     const textarea = document.getElementById('imagenesUrlsTextarea');
@@ -351,7 +353,6 @@ function actualizarVistaFotos() {
     contenedor.innerHTML = '';
     label.innerText = fotosGaleria.length + ' fotografía(s) en la galería';
 
-    // Sincronizar textarea con las URLs separadas por salto de línea
     textarea.value = fotosGaleria.join('\n');
 
     if (fotosGaleria.length === 0) {

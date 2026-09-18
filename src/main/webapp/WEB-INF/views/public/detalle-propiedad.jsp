@@ -258,10 +258,26 @@
                         </p>
                         <div class="mb-3">
                             <label class="form-label small fw-semibold">Fecha y Hora de la Visita *</label>
-                            <input type="datetime-local" name="fechaHora" class="form-control" required>
+                            <input type="datetime-local" name="fechaHora" id="inputFechaCita" class="form-control" required>
+                            <div class="invalid-feedback" id="feedbackCitaTurno"></div>
                             <div class="form-text small">
-                                Validación estricta en base de datos para evitar cruce de citas en el mismo horario.
+                                Cada inmueble admite <strong>un solo turno por horario</strong>. Los turnos ya reservados por otros clientes aparecen bloqueados; las citas canceladas quedan liberadas.
                             </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Turnos ocupados para este inmueble</label>
+                            <c:choose>
+                                <c:when test="${not empty horariosOcupados}">
+                                    <div class="d-flex flex-wrap gap-1">
+                                        <c:forEach var="h" items="${horariosOcupados}">
+                                            <span class="badge bg-secondary-subtle text-secondary border small"><i class="bi bi-clock me-1"></i>${h}</span>
+                                        </c:forEach>
+                                    </div>
+                                </c:when>
+                                <c:otherwise>
+                                    <span class="small text-muted">No hay turnos reservados todavía; todos los horarios futuros están disponibles.</span>
+                                </c:otherwise>
+                            </c:choose>
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-semibold">Comentarios para el Agente</label>
@@ -314,6 +330,12 @@
             </div>
         </div>
     </div>
+
+    <script>
+        window.TURNOS_OCUPADOS = [
+            <c:forEach var="h" items="${horariosOcupados}" varStatus="st">"${h}"${st.last ? '' : ','}</c:forEach>
+        ];
+    </script>
 </c:if>
 
 <%@ include file="/WEB-INF/views/common/footer.jspf" %>

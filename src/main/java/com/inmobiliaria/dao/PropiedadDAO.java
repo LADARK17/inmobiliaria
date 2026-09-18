@@ -166,6 +166,37 @@ public class PropiedadDAO {
         return lista;
     }
 
+    public List<Propiedad> listarTodas() throws SQLException {
+        String sql = "SELECT p.*, c.nombre AS ciudad_nombre, c.departamento AS depto_nombre, " +
+                     "tp.nombre AS tipo_nombre, inm.nombre AS inmobiliaria_nombre, " +
+                     "(SELECT img.url_imagen FROM imagen_propiedad img WHERE img.id_propiedad = p.id ORDER BY img.es_principal DESC, img.orden ASC LIMIT 1) AS img_principal " +
+                     "FROM propiedad p " +
+                     "INNER JOIN ciudad c ON p.id_ciudad = c.id " +
+                     "INNER JOIN tipo_propiedad tp ON p.id_tipo_propiedad = tp.id " +
+                     "INNER JOIN inmobiliaria inm ON p.id_inmobiliaria = inm.id " +
+                     "ORDER BY p.id DESC";
+
+        List<Propiedad> lista = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                lista.add(mapPropiedadConDetalles(rs));
+            }
+        }
+        return lista;
+    }
+
+    public boolean cambiarEstado(int idPropiedad, String nuevoEstado) throws SQLException {
+        String sql = "UPDATE propiedad SET estado = ? WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, nuevoEstado);
+            ps.setInt(2, idPropiedad);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
     public boolean insertar(Propiedad p, List<Integer> idCaracteristicas, List<String> imagenesUrls) throws SQLException {
         String sqlPropiedad = "INSERT INTO propiedad (id_inmobiliaria, id_ciudad, id_tipo_propiedad, matricula_inmobiliaria, " +
                               "titulo, descripcion, precio, area_m2, habitaciones, banos, estrato, direccion, destacada, tipo_operacion, estado) " +

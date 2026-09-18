@@ -155,9 +155,13 @@ CREATE TABLE cita (
     fecha_hora TIMESTAMP NOT NULL,
     estado VARCHAR(20) DEFAULT 'PENDIENTE' CHECK (estado IN ('PENDIENTE', 'CONFIRMADA', 'REALIZADA', 'CANCELADA')),
     comentarios VARCHAR(255),
-    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT uq_cita_propiedad_horario UNIQUE (id_propiedad, fecha_hora)
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Turno único por inmueble SOLO para citas activas (estado <> 'CANCELADA'):
+-- garantiza que dos clientes no agenden el mismo inmueble en el mismo horario a nivel BD,
+-- pero permite re-reservar un horario cuya cita fue cancelada.
+CREATE UNIQUE INDEX uq_cita_activa_propiedad_horario ON cita (id_propiedad, fecha_hora) WHERE estado <> 'CANCELADA';
 
 CREATE TABLE solicitud (
     id SERIAL PRIMARY KEY,

@@ -1,5 +1,6 @@
 package com.inmobiliaria.controller;
 
+import com.inmobiliaria.dao.CitaDAO;
 import com.inmobiliaria.dao.FavoritoDAO;
 import com.inmobiliaria.dao.PropiedadDAO;
 import com.inmobiliaria.model.Propiedad;
@@ -22,6 +23,7 @@ public class PublicController extends HttpServlet {
 
     private PropiedadDAO propiedadDAO = new PropiedadDAO();
     private FavoritoDAO favoritoDAO = new FavoritoDAO();
+    private CitaDAO citaDAO = new CitaDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -106,12 +108,13 @@ public class PublicController extends HttpServlet {
             return;
         }
 
-        // Si el usuario tiene sesión, verificar si la tiene en favoritos
+        // Si el usuario tiene sesión, verificar si la tiene en favoritos y cargar turnos ocupados
         HttpSession session = req.getSession(false);
         boolean esFavorito = false;
         if (session != null && session.getAttribute("usuarioLogueado") != null) {
             Usuario u = (Usuario) session.getAttribute("usuarioLogueado");
             esFavorito = favoritoDAO.esFavorito(u.getId(), id);
+            req.setAttribute("horariosOcupados", citaDAO.listarHorariosOcupados(id));
         }
 
         req.setAttribute("propiedad", prop);

@@ -21,10 +21,13 @@
             </div>
         </div>
         <div class="d-flex gap-2">
+            <a href="${pageContext.request.contextPath}/admin/propiedades" class="btn btn-primary rounded-pill px-3 shadow-sm d-flex align-items-center gap-1">
+                <i class="bi bi-houses-fill"></i> Catálogo de Inmuebles
+            </a>
             <a href="${pageContext.request.contextPath}/admin/reportes" class="btn btn-outline-primary rounded-pill px-3 shadow-sm d-flex align-items-center gap-1">
                 <i class="bi bi-bar-chart-line-fill"></i> Reportes SQL
             </a>
-            <a href="${pageContext.request.contextPath}/admin/usuarios" class="btn btn-primary rounded-pill px-3 shadow-sm d-flex align-items-center gap-1">
+            <a href="${pageContext.request.contextPath}/admin/usuarios" class="btn btn-outline-primary rounded-pill px-3 shadow-sm d-flex align-items-center gap-1">
                 <i class="bi bi-people-fill"></i> Administrar Usuarios
             </a>
             <a href="${pageContext.request.contextPath}/admin/auditoria" class="btn btn-outline-secondary rounded-pill px-3">

@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
 @WebServlet(name = "ClienteController", urlPatterns = {
@@ -165,25 +166,48 @@ public class ClienteController extends HttpServlet {
         req.getRequestDispatcher("/WEB-INF/views/cliente/citas.jsp").forward(req, resp);
     }
 
-    private void agendarCita(HttpServletRequest req, HttpServletResponse resp, Usuario u) throws SQLException, IOException, ServletException {
+    private void agendarCita(HttpServletRequest req, HttpServletResponse resp, Usuario u) throws SQLException, IOException {
         int idPropiedad = Integer.parseInt(req.getParameter("idPropiedad"));
-        String fechaHoraStr = req.getParameter("fechaHora"); // Format: yyyy-MM-ddTHH:mm
+        String fechaHoraStr = req.getParameter("fechaHora");
         String comentarios = req.getParameter("comentarios");
+        String origenError = req.getContextPath() + "/propiedad?id=" + idPropiedad + "&error=";
+
+        if (fechaHoraStr == null || fechaHoraStr.trim().isEmpty()) {
+            resp.sendRedirect(origenError + java.net.URLEncoder.encode("Debe seleccionar una fecha y hora para la visita.", "UTF-8"));
+            return;
+        }
 
         try {
             LocalDateTime fechaHora = LocalDateTime.parse(fechaHoraStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+
+            if (fechaHora.isBefore(LocalDateTime.now())) {
+                resp.sendRedirect(origenError + java.net.URLEncoder.encode("La fecha y hora de la visita debe ser posterior al momento actual.", "UTF-8"));
+                return;
+            }
+
+            if (citaDAO.existeCitaActiva(idPropiedad, fechaHora)) {
+                resp.sendRedirect(origenError + java.net.URLEncoder.encode("Ese turno ya está reservado por otro cliente. Seleccione un horario disponible según el calendario.", "UTF-8"));
+                return;
+            }
+
             Cita cita = new Cita();
             cita.setIdCliente(u.getId());
             cita.setIdPropiedad(idPropiedad);
             cita.setFechaHora(fechaHora);
             cita.setComentarios(comentarios);
 
-            citaDAO.agendar(cita);
+            if (!citaDAO.agendar(cita)) {
+                resp.sendRedirect(origenError + java.net.URLEncoder.encode("No se pudo reservar el turno. Por favor intente nuevamente.", "UTF-8"));
+                return;
+            }
+
             auditoriaDAO.registrar(new Auditoria(u.getId(), "AGENDAR_CITA", "cita", idPropiedad, "Visita agendada para el " + fechaHoraStr, req.getRemoteAddr()));
             resp.sendRedirect(req.getContextPath() + "/cliente/citas?exito=Visita+agendada+correctamente.+El+agente+confirmara+el+horario.");
+        } catch (DateTimeParseException ex) {
+            resp.sendRedirect(origenError + java.net.URLEncoder.encode("El formato de fecha y hora ingresado no es válido.", "UTF-8"));
         } catch (SQLException ex) {
             String errorMsg = DatabaseConnection.translateSQLException(ex);
-            resp.sendRedirect(req.getContextPath() + "/propiedad?id=" + idPropiedad + "&error=" + java.net.URLEncoder.encode(errorMsg, "UTF-8"));
+            resp.sendRedirect(origenError + java.net.URLEncoder.encode(errorMsg, "UTF-8"));
         }
     }
 

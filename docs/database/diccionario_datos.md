@@ -127,15 +127,16 @@ Inmuebles guardados por los clientes en su lista de seguimiento.
 - **Restricción:** `UNIQUE (id_usuario, id_propiedad)` para evitar duplicados.
 
 ### 4.2. Tabla: `cita`
-Agendamiento de visitas presenciales a los inmuebles.
+Agendamiento de visitas presenciales a los inmuebles (cita por turno único).
 - `id` (INT, PK, AUTO_INCREMENT).
 - `id_cliente` (INT, NOT NULL, FK `usuario(id)` ON DELETE CASCADE).
 - `id_propiedad` (INT, NOT NULL, FK `propiedad(id)` ON DELETE CASCADE).
 - `fecha_hora` (DATETIME, NOT NULL): Momento pactado.
 - `estado` (ENUM('PENDIENTE', 'CONFIRMADA', 'REALIZADA', 'CANCELADA'), DEFAULT 'PENDIENTE').
+- `slot_turno` (DATETIME, columna generada STORED): es `NULL` si la cita está `CANCELADA`, si no coincide con `fecha_hora`.
 - `comentarios` (VARCHAR(255), NULL).
 - `fecha_creacion` (DATETIME, DEFAULT CURRENT_TIMESTAMP).
-- **Restricción:** `UNIQUE (id_propiedad, fecha_hora)` para impedir doble reserva simultánea del mismo inmueble.
+- **Restricción de turno único:** `UNIQUE (id_propiedad, slot_turno)` impide que dos clientes reserven el mismo inmueble en el mismo horario. Como las filas `NULL` no colisionan en UNIQUE, una cita cancelada **libera** el turno y puede volver a agendarse. En PostgreSQL/Supabase se implementa como índice único parcial `WHERE estado <> 'CANCELADA'`. Además, la aplicación valida la disponibilidad antes del INSERT (`CitaDAO.existeCitaActiva`).
 
 ### 4.3. Tabla: `solicitud`
 Trámite contractual formal iniciado por un cliente.

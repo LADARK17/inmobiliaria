@@ -35,7 +35,7 @@
 - `usuario.correo`: Evita duplicar cuentas.
 - `propiedad.matricula_inmobiliaria`: Evita registrar dos veces el mismo predio legal.
 - `perfil.id_usuario` y `perfil.documento_identidad`: Aseguran la relación 1:1 y documento civil único.
-- `cita(id_propiedad, fecha_hora)`: Impide que dos clientes agenden la misma propiedad en el mismo horario.
+- `cita(id_propiedad, fecha_hora)`: Impide que dos clientes agenden la misma propiedad en el mismo horario (turno único). En Supabase se usa un **índice único parcial** `WHERE estado <> 'CANCELADA'`, de modo que una cita cancelada libera el turno.
 - `favorito(id_usuario, id_propiedad)`: Evita guardar dos veces el mismo inmueble en favoritos.
 - *Manejo en Java:* En `DatabaseConnection.translateSQLException()` capturamos el código de error `1062` o `SQLIntegrityConstraintViolationException` e inspeccionamos el mensaje para traducirlo en un texto amigable al usuario (ej: *"El correo ya está registrado"* o *"Ya existe una cita en esa hora"*), impidiendo volcados de trazas técnicas al navegador.
 
